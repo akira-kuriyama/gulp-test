@@ -3,6 +3,7 @@
 // -- css結合(sassのimport機能で代替できるはず)
 // -- css圧縮、⇒圧縮系はdeploy時にやるべきだと思う。csslint書けても圧縮済みのcssにかかって見難い。あとstyleguide生成時も困る
 // -- csslint
+// gulp-autoprefixerほしいかも (sass mixinでもできるがこっちのほうがなにも考える適用されるので
 
 // -- js圧縮
 // JS依存関係、
@@ -20,7 +21,13 @@
 //   css compile, csprite, sslint, postcss?
 
 // csslint自動実行、
-// postcss
+// postcss or mixinライブラリ
+// css, jsの圧縮って他のプロジェクトってどのタイミングで行っている？
+
+//入れるかも？
+// gulp-htmlhint
+// gulp-load-tasks
+// gulp-notify
 
 var gulp = require('gulp');
 // css
@@ -37,6 +44,7 @@ var spritesmith = require('gulp.spritesmith');
 var changed = require('gulp-changed');
 var del = require('del');
 var runSequence = require('run-sequence');
+var livereload = require('gulp-livereload');
 
 var jsDir = {src: 'app/assets/javascripts/', dest: 'public/javascripts/'};
 var cssDir = {src: 'app/assets/stylesheets/', dest: 'public/stylesheets/'};
@@ -75,7 +83,8 @@ gulp.task('image', function () {
 gulp.task('js', function () {
     gulp.src(jsDir.src + '**/*.js')
         .pipe(uglify())
-        .pipe(gulp.dest(jsDir.dest));
+        .pipe(gulp.dest(jsDir.dest))
+        .pipe(livereload());
 });
 
 gulp.task('sass', function () {
@@ -84,7 +93,8 @@ gulp.task('sass', function () {
         .pipe(csslint.reporter())
         .pipe(sass())
         .pipe(minifyCss({compatibility: 'ie8'}))
-        .pipe(gulp.dest(cssDir.dest));
+        .pipe(gulp.dest(cssDir.dest))
+        .pipe(livereload());
 });
 gulp.task('csslint', function () {
     gulp.src(cssDir.dest + '**/*.css')
@@ -114,3 +124,8 @@ gulp.task('styleguide--clean-tmp', function (cd) {
     del(styleGuideTmpDir, cd);
 });
 
+gulp.task('watch', function () {
+    livereload.listen();
+    gulp.watch(jsDir.src + '**/*.js', ['js']);
+    gulp.watch(cssDir.src + '**/*.scss', ['sass']);
+});
