@@ -14,7 +14,7 @@
 // -- 画像最適化、
 //
 // -- スプライト、
-// svgのフォント化、
+// svgのフォント化(gulp-fontcustom)
 
 // ライブリロード、
 //   js  compile
@@ -28,6 +28,8 @@
 // gulp-htmlhint
 // gulp-load-tasks
 // gulp-notify
+
+// gulpをes6で書く
 
 var gulp = require('gulp');
 // css
