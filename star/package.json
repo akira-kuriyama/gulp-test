@@ -12,11 +12,15 @@
     "gulp-changed": "^1.3.0",
     "gulp-csslint": "^0.2.0",
     "gulp-imagemin": "^2.3.0",
+    "gulp-livereload": "^3.8.0",
     "gulp-minify-css": "^1.2.0",
     "gulp-sass": "^2.0.4",
     "gulp-styledocco": "0.0.3",
     "gulp-uglify": "^1.2.0",
     "gulp.spritesmith": "^4.0.0",
     "run-sequence": "^1.1.2"
+  },
+  "dependencies": {
+    "gulp-fontcustom": "^0.1.1"
   }
 }

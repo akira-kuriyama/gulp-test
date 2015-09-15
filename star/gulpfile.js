@@ -32,16 +32,19 @@
 // gulpをes6で書く
 
 var gulp = require('gulp');
+// js
+var uglify = require('gulp-uglify');
+
 // css
 var sass = require('gulp-sass');
 var minifyCss = require('gulp-minify-css');
 var csslint = require('gulp-csslint');
 var styledocco = require('gulp-styledocco');
-// js
-var uglify = require('gulp-uglify');
 // image
 var imagemin = require('gulp-imagemin');
 var spritesmith = require('gulp.spritesmith');
+var fontcustom = require('gulp-fontcustom');
+
 // util
 var changed = require('gulp-changed');
 var del = require('del');
@@ -74,6 +77,14 @@ gulp.task('sprite', function () {
     });
 })
 ;
+gulp.task('webfont', function () {
+    gulp.src(imageDir.src + "icons")
+        .pipe(fontcustom({
+            font_name: 'myfont',  // defaults to 'fontcustom',
+            'css-selector': '.prefix-{{glyph}}'
+        }))
+        .pipe(gulp.dest(imageDir.dest + "webfonts"))
+});
 
 gulp.task('image', function () {
     gulp.src(imageDir.src + '**/*')
