@@ -14,11 +14,11 @@
 // -- 画像最適化、
 //
 // -- スプライト、
-// svgのフォント化(gulp-fontcustom)
+// -- svgのフォント化(gulp-fontcustom)
 
 // ライブリロード、
 //   js  compile
-//   css compile, csprite, sslint, postcss?
+//   css compile, csprite, csslint
 
 // csslint自動実行、
 // postcss or mixinライブラリ
@@ -33,7 +33,9 @@
 
 var gulp = require('gulp');
 // js
+var babel = require('gulp-babel');
 var uglify = require('gulp-uglify');
+var eslint = require('gulp-eslint');
 
 // css
 var sass = require('gulp-sass');
@@ -95,9 +97,18 @@ gulp.task('image', function () {
 
 gulp.task('js', function () {
     gulp.src(jsDir.src + '**/*.js')
-        .pipe(uglify())
+        .pipe(babel())
+//        .pipe(uglify())
         .pipe(gulp.dest(jsDir.dest))
         .pipe(livereload());
+});
+
+gulp.task('eslint', function () {
+    gulp.src(jsDir.src + '**/*.js')
+        .pipe(eslint({useEslintrc: true}))
+        .pipe(eslint.format())
+        .pipe(eslint.failOnError());
+       // .pipe(livereload());
 });
 
 gulp.task('sass', function () {
