@@ -77,20 +77,34 @@ gulp.task('sprite', function () {
         spriteData.img.pipe(gulp.dest(imageDir.dest + config.path)); //imgNameで指定したスプライト画像の保存先
         spriteData.css.pipe(gulp.dest(cssDir.src + config.path)); //cssNameで指定したcssの保存先
     });
-})
-;
+});
+
 gulp.task('webfont', function () {
+    return runSequence(
+        'webfont--generate',
+        'webfont--move');
+});
+
+gulp.task('webfont--generate', function () {
     gulp.src(imageDir.src + "icons")
         .pipe(fontcustom({
             font_name: 'myfont',  // defaults to 'fontcustom',
             'css-selector': '.prefix-{{glyph}}'
         }))
-        .pipe(gulp.dest(imageDir.dest + "webfonts"))
+        .pipe(gulp.dest(imageDir.dest + 'webfonts'))
+
+});
+
+gulp.task('webfont--move', function () {
+    gulp.src(imageDir.dest + 'webfonts/**/*.css')
+        .pipe(gulp.dest(cssDir.dest));
+    gulp.src(imageDir.dest + 'webfonts/myfont.{eot,svg,ttf,woff}')
+        .pipe(gulp.dest(imageDir.dest));
+    // 生成元ディレクトリを削除したかったら削除する
 });
 
 gulp.task('image', function () {
-    gulp.src(imageDir.src + '**/*')
-        .pipe(changed(imageDir.dest))
+    gulp.src(imageDir.src + '**/*').pipe(changed(imageDir.dest))
         .pipe(imagemin())
         .pipe(gulp.dest(imageDir.dest));
 });
@@ -98,25 +112,23 @@ gulp.task('image', function () {
 gulp.task('js', function () {
     gulp.src(jsDir.src + '**/*.js')
         .pipe(babel())
-//        .pipe(uglify())
+        //.pipe(uglify())
         .pipe(gulp.dest(jsDir.dest))
         .pipe(livereload());
 });
 
 gulp.task('eslint', function () {
-    gulp.src(jsDir.src + '**/*.js')
+    return gulp.src(jsDir.src + '**/*.js')
         .pipe(eslint({useEslintrc: true}))
         .pipe(eslint.format())
-        .pipe(eslint.failOnError());
-       // .pipe(livereload());
+        .pipe(eslint.failOnError())
+        .pipe(livereload());
 });
 
 gulp.task('sass', function () {
     gulp.src(cssDir.src + '**/*.scss')
-        .pipe(csslint())
-        .pipe(csslint.reporter())
         .pipe(sass())
-        .pipe(minifyCss({compatibility: 'ie8'}))
+        //.pipe(minifyCss({compatibility: 'ie8'})) minifyはデプロイの際にやったほうがよさそう
         .pipe(gulp.dest(cssDir.dest))
         .pipe(livereload());
 });
@@ -150,6 +162,7 @@ gulp.task('styleguide--clean-tmp', function (cd) {
 
 gulp.task('watch', function () {
     livereload.listen();
-    gulp.watch(jsDir.src + '**/*.js', ['js']);
+    gulp.watch(jsDir.src + '**/*.js', ['js', 'eslint']);
     gulp.watch(cssDir.src + '**/*.scss', ['sass']);
+    gulp.watch(cssDir.dest + '**/*.css', ['csslint']);
 });
