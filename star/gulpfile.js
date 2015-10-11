@@ -1,60 +1,17 @@
-// --コンパイル、
-// --styleguide
-// -- css結合(sassのimport機能で代替できるはず)
-// -- css圧縮、⇒圧縮系はdeploy時にやるべきだと思う。csslint書けても圧縮済みのcssにかかって見難い。あとstyleguide生成時も困る
-// -- csslint
+//  css圧縮、⇒圧縮系はdeploy時にやるべきだと思う。csslint書けても圧縮済みのcssにかかって見難い。あとstyleguide生成時も困る
 // gulp-autoprefixerほしいかも (sass mixinでもできるがこっちのほうがなにも考える適用されるので
 
-// -- js圧縮
+// js圧縮
 // JS依存関係、
-// eslint自動実行、
-// JSテスト自動実行、
 // sourcemap
 
-// -- 画像最適化、
-//
-// -- スプライト、
-// -- svgのフォント化(gulp-fontcustom)
-
-// ライブリロード、
-//   js  compile
-//   css compile, csprite, csslint
-
-// csslint自動実行、
-// postcss or mixinライブラリ
-// css, jsの圧縮って他のプロジェクトってどのタイミングで行っている？
-
-//入れるかも？
-// gulp-htmlhint
-// gulp-load-tasks
-// gulp-notify
 
 // gulpをes6で書く
 
 var gulp = require('gulp');
-// js
-var babel = require('gulp-babel');
-var uglify = require('gulp-uglify');
-var eslint = require('gulp-eslint');
-
-// css
-var sass = require('gulp-sass');
-var minifyCss = require('gulp-minify-css');
-var csslint = require('gulp-csslint');
-var styledocco = require('gulp-styledocco');
-// image
-var imagemin = require('gulp-imagemin');
-var spritesmith = require('gulp.spritesmith');
-var fontcustom = require('gulp-fontcustom');
-
-// util
-var changed = require('gulp-changed');
-var cache = require('gulp-cached');
-var del = require('del');
-var runSequence = require('run-sequence');
-var livereload = require('gulp-livereload');
-var plumber = require('gulp-plumber');
-var notify = require('gulp-notify');
+var plugins = require('gulp-load-plugins')({
+    pattern: ['gulp-*', 'gulp.*', 'run-sequence', 'del']
+});
 
 var jsDir = {src: 'app/assets/javascripts/', dest: 'public/javascripts/'};
 var cssDir = {src: 'app/assets/stylesheets/', dest: 'public/stylesheets/'};
@@ -67,7 +24,7 @@ gulp.task('sprite', function () {
         {path: 'sprites/jump', imageName: 'sprite-jump'}];
     spriteConfig.forEach(function (config) {
         var spriteData = gulp.src(imageDir.src + config.path + '/*')
-                .pipe(spritesmith({
+                .pipe(plugins.spritesmith({
                     imgName: config.imageName + '.png',
                     cssName: '_' + config.imageName + '.scss',
                     imgPath: imageDir.dest + config.path + '/' + config.imageName + '.png',
@@ -83,14 +40,14 @@ gulp.task('sprite', function () {
 });
 
 gulp.task('webfont', function () {
-    return runSequence(
+    return plugins.runSequence(
         'webfont--generate',
         'webfont--move');
 });
 
 gulp.task('webfont--generate', function () {
     gulp.src(imageDir.src + "icons")
-        .pipe(fontcustom({
+        .pipe(plugins.fontcustom({
             font_name: 'myfont',  // defaults to 'fontcustom',
             'css-selector': '.prefix-{{glyph}}'
         }))
@@ -108,72 +65,72 @@ gulp.task('webfont--move', function () {
 
 gulp.task('image', function () {
     gulp.src(imageDir.src + '**/*')
-        .pipe(changed(imageDir.dest))
-        .pipe(imagemin())
+        .pipe(plugins.changed(imageDir.dest))
+        .pipe(plugins.imagemin())
         .pipe(gulp.dest(imageDir.dest));
 });
 
 gulp.task('js', function () {
     gulp.src(jsDir.src + '**/*.js')
-        .pipe(cache('js'))
-        .pipe(plumber({errorHandler: notify.onError('<%= error.message %>')}))
-        .pipe(babel())
+        .pipe(plugins.cached('js'))
+        .pipe(plugins.plumber({errorHandler: plugins.notify.onError('<%= error.message %>')}))
+        .pipe(plugins.babel())
         //.pipe(uglify())
         .pipe(gulp.dest(jsDir.dest))
-        .pipe(livereload());
+        .pipe(plugins.livereload());
 });
 
 gulp.task('eslint', function () {
     return gulp.src(jsDir.src + '**/*.js')
-        .pipe(cache('eslint'))
-        .pipe(plumber({errorHandler: notify.onError('<%= error.message %>')}))
-        .pipe(eslint({useEslintrc: true}))
-        .pipe(eslint.format())
-        .pipe(eslint.failOnError())
-        .pipe(livereload());
+        .pipe(plugins.cached('eslint'))
+        .pipe(plugins.plumber({errorHandler: plugins.notify.onError('<%= error.message %>')}))
+        .pipe(plugins.eslint({useEslintrc: true}))
+        .pipe(plugins.eslint.format())
+        .pipe(plugins.eslint.failOnError())
+        .pipe(plugins.livereload());
 });
 
 gulp.task('sass', function () {
     gulp.src(cssDir.src + '**/*.scss')
-        .pipe(cache('sass'))
-        .pipe(sass())
+        .pipe(plugins.cached('sass'))
+        .pipe(plugins.sass())
         //.pipe(minifyCss({compatibility: 'ie8'})) minifyはデプロイの際にやったほうがよさそう
         .pipe(gulp.dest(cssDir.dest))
-        .pipe(livereload());
+        .pipe(plugins.livereload());
 });
 gulp.task('csslint', function () {
     gulp.src(cssDir.dest + '**/*.css')
-        .pipe(cache('csslint'))
-        .pipe(plumber({errorHandler: notify.onError('<%= error.message %>')}))
-        .pipe(csslint())
-        .pipe(csslint.reporter())
-        .pipe(csslint.reporter('fail')); // plumberで拾うためにわざとfailさせている
+        .pipe(plugins.cached('csslint'))
+        .pipe(plugins.plumber({errorHandler: plugins.notify.onError('<%= error.message %>')}))
+        .pipe(plugins.csslint())
+        .pipe(plugins.csslint.reporter())
+        .pipe(plugins.csslint.reporter('fail')); // plumberで拾うためにわざとfailさせている
 });
 gulp.task('styleguide', function (done) {
-    return runSequence(
+    return plugins.runSequence(
         'styleguide--sass-compile-into-tmp',
         'styleguide--generate-styleguide',
         'styleguide--clean-tmp');
 });
 gulp.task('styleguide--sass-compile-into-tmp', function () {
     return gulp.src(cssDir.src + '**/*.scss')
-        .pipe(sass())
+        .pipe(plugins.sass())
         .pipe(gulp.dest(styleGuideTmpDir));
 });
 gulp.task('styleguide--generate-styleguide', function (cd) {
     return gulp.src(styleGuideTmpDir + '/**/*.css')
-        .pipe(styledocco({
+        .pipe(plugins.styledocco({
             out: 'styleguide',
             name: 'My Project',
             'no-minify': true
         }));
 });
 gulp.task('styleguide--clean-tmp', function (cd) {
-    del(styleGuideTmpDir, cd);
+    plugins.del(styleGuideTmpDir, cd);
 });
 
 gulp.task('watch', function () {
-    livereload.listen();
+    plugins.livereload.listen();
     gulp.watch(jsDir.src + '**/*.js', ['js', 'eslint']);
     gulp.watch(cssDir.src + '**/*.scss', ['sass']);
     gulp.watch(cssDir.dest + '**/*.css', ['csslint']);
