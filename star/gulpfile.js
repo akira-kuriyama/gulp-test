@@ -49,9 +49,12 @@ var fontcustom = require('gulp-fontcustom');
 
 // util
 var changed = require('gulp-changed');
+var cache = require('gulp-cached');
 var del = require('del');
 var runSequence = require('run-sequence');
 var livereload = require('gulp-livereload');
+var plumber = require('gulp-plumber');
+var notify = require('gulp-notify');
 
 var jsDir = {src: 'app/assets/javascripts/', dest: 'public/javascripts/'};
 var cssDir = {src: 'app/assets/stylesheets/', dest: 'public/stylesheets/'};
@@ -104,13 +107,16 @@ gulp.task('webfont--move', function () {
 });
 
 gulp.task('image', function () {
-    gulp.src(imageDir.src + '**/*').pipe(changed(imageDir.dest))
+    gulp.src(imageDir.src + '**/*')
+        .pipe(changed(imageDir.dest))
         .pipe(imagemin())
         .pipe(gulp.dest(imageDir.dest));
 });
 
 gulp.task('js', function () {
     gulp.src(jsDir.src + '**/*.js')
+        .pipe(cache('js'))
+        .pipe(plumber({errorHandler: notify.onError('<%= error.message %>')}))
         .pipe(babel())
         //.pipe(uglify())
         .pipe(gulp.dest(jsDir.dest))
@@ -119,6 +125,8 @@ gulp.task('js', function () {
 
 gulp.task('eslint', function () {
     return gulp.src(jsDir.src + '**/*.js')
+        .pipe(cache('eslint'))
+        .pipe(plumber({errorHandler: notify.onError('<%= error.message %>')}))
         .pipe(eslint({useEslintrc: true}))
         .pipe(eslint.format())
         .pipe(eslint.failOnError())
@@ -127,6 +135,7 @@ gulp.task('eslint', function () {
 
 gulp.task('sass', function () {
     gulp.src(cssDir.src + '**/*.scss')
+        .pipe(cache('sass'))
         .pipe(sass())
         //.pipe(minifyCss({compatibility: 'ie8'})) minifyはデプロイの際にやったほうがよさそう
         .pipe(gulp.dest(cssDir.dest))
@@ -134,8 +143,11 @@ gulp.task('sass', function () {
 });
 gulp.task('csslint', function () {
     gulp.src(cssDir.dest + '**/*.css')
+        .pipe(cache('csslint'))
+        .pipe(plumber({errorHandler: notify.onError('<%= error.message %>')}))
         .pipe(csslint())
-        .pipe(csslint.reporter());
+        .pipe(csslint.reporter())
+        .pipe(csslint.reporter('fail')); // plumberで拾うためにわざとfailさせている
 });
 gulp.task('styleguide', function (done) {
     return runSequence(
